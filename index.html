@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CBT - SMP IT Putra Abu Hurairah</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #031526;
+            --primary: #00d2ff;
+            --secondary: #0087a3;
+            --card-bg: rgba(7, 34, 56, 0.85);
+            --text-light: #e0f2fe;
+            --correct: #10b981;
+            --wrong: #ef4444;
+            --glow-correct: 0 0 15px rgba(16, 185, 129, 0.6);
+            --glow-wrong: 0 0 15px rgba(239, 68, 68, 0.6);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 210, 255, 0.1), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.08), transparent 25%);
+            color: var(--text-light);
+            min-height: 100vh;
+        }
+
+        /* Pola Geometris Islami Modern (Faceless & Futuristic) */
+        .islamic-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l14.14 14.14L60 14.14 45.86 28.28 60 42.42 44.14 42.42 30 56.56 15.86 42.42 0 42.42 14.14 28.28 0 14.14 15.86 14.14z' fill='%2300d2ff' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+            z-index: -1;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(180deg, rgba(3, 21, 38, 0.95) 0%, transparent 100%);
+            border-bottom: 2px solid rgba(0, 210, 255, 0.2);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .header p { margin: 5px 0 0; color: #94a3b8; font-size: 0.9rem;}
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px 80px;
+        }
+
+        .soal-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .soal-card:hover { border-color: rgba(0, 210, 255, 0.3); }
+        .pertanyaan { font-size: 1.15rem; font-weight: 600; margin-bottom: 20px; line-height: 1.6;}
+
+        .pilihan-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .opsi-label {
+            display: flex;
+            align-items: center;
+            padding: 12px 18px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .opsi-label:hover {
+            background: rgba(0, 210, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        .opsi-label input { display: none; }
+
+        /* Tampilan saat opsi dipilih (sebelum submit) */
+        .opsi-label.selected {
+            background: rgba(0, 210, 255, 0.2);
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+        }
+
+        /* Visual Feedback setelah submit */
+        .opsi-label.is-correct {
+            background: rgba(16, 185, 129, 0.15) !important;
+            border-color: var(--correct) !important;
+            box-shadow: var(--glow-correct) !important;
+        }
+        .opsi-label.is-wrong {
+            background: rgba(239, 68, 68, 0.15) !important;
+            border-color: var(--wrong) !important;
+            box-shadow: var(--glow-wrong) !important;
+        }
+        
+        /* Ikon modern faceless */
+        .icon-feedback {
+            position: absolute; right: 15px; top: 50%;
+            transform: translateY(-50%); width: 24px; height: 24px;
+            display: none;
+        }
+        
+        .is-correct .icon-feedback.correct-icon { display: block; }
+        .is-wrong .icon-feedback.wrong-icon { display: block; }
+
+        .btn-submit, .btn-ulangi, .btn-menu {
+            display: block; width: 100%;
+            padding: 15px; font-size: 1.2rem; font-weight: bold;
+            font-family: inherit; color: #fff;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            border: none; border-radius: 10px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.4);
+            transition: transform 0.2s, filter 0.2s;
+            margin-bottom: 15px;
+        }
+        .btn-submit:hover, .btn-ulangi:hover, .btn-menu:hover { filter: brightness(1.2); transform: scale(1.02); }
+
+        .btn-menu {
+            background: linear-gradient(135deg, #374151, #1f2937);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Modal Hasil */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: var(--card-bg); border: 1px solid var(--primary);
+            padding: 40px; border-radius: 20px; text-align: center;
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
+            max-width: 400px; width: 90%;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .score-circle {
+            width: 120px; height: 120px; border-radius: 50%;
+            background: conic-gradient(var(--primary) 0%, transparent 100%);
+            display: flex; justify-content: center; align-items: center;
+            margin: 0 auto 20px; font-size: 2.5rem; font-weight: bold;
+            border: 4px solid var(--primary); box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
+        }
+        .score-details p { margin: 10px 0; font-size: 1.1rem; }
+        .text-green { color: var(--correct); font-weight: bold; }
+        .text-red { color: var(--wrong); font-weight: bold; }
+        
+        .menu-title {
+            color: var(--primary);
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="islamic-pattern"></div>
+
+    <header class="header">
+        <h1>TES SELEKSI SMP IT PAH</h1>
+        <p>Tahun Pelajaran 2027–2028 | 50 Soal Acak per Sesi</p>
+    </header>
+
+    <!-- MENU PEMILIHAN LEVEL -->
+    <div class="container" id="menu-container">
+        <div class="soal-card">
+            <h2 class="menu-title">Pilih Tingkat Kesulitan Ujian</h2>
+            <button class="btn-submit" onclick="pilihLevel('rendah')">Ujian Level Rendah (soal.js)</button>
+            <button class="btn-submit" style="background: linear-gradient(135deg, #b91c1c, #ef4444); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);" onclick="pilihLevel('tinggi')">Ujian Level Tinggi (soal2.js)</button>
+        </div>
+    </div>
+
+    <!-- KONTAINER UJIAN (Disembunyikan di awal) -->
+    <div class="container" id="quiz-container" style="display: none;">
+        <form id="quiz-form">
+            <div id="soal-container">
+                <!-- Soal akan di-generate via JavaScript di sini -->
+            </div>
+            <button type="button" class="btn-submit" onclick="submitUjian()" id="btnSubmit">Selesai & Cek Skor</button>
+        </form>
+    </div>
+
+    <!-- Modal Hasil -->
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <h2 style="color: var(--primary); margin-top:0;">Hasil Ujian</h2>
+            <div class="score-circle" id="finalScore">0</div>
+            <div class="score-details">
+                <p>Jawaban Benar : <span class="text-green" id="jmlBenar">0</span></p>
+                <p>Jawaban Salah : <span class="text-red" id="jmlSalah">0</span></p>
+            </div>
+            <br>
+            <button type="button" class="btn-ulangi" onclick="ulangiUjian()">Ulangi (Acak Soal Baru)</button>
+            <button type="button" class="btn-menu" onclick="window.location.href='index.html'">Kembali ke Menu Utama</button>
+            
+            <p style="margin-top: 15px; font-size: 0.9rem; color: #94a3b8;">Tutup popup ini untuk melihat kunci di mana letak salahnya.</p>
+            <button onclick="document.getElementById('resultModal').style.display='none'" style="background:transparent; border:1px solid #fff; color:#fff; padding: 5px 15px; border-radius: 5px; cursor:pointer; margin-top:10px;">Tutup</button>
+        </div>
+    </div>
+
+    <script>
+        const JML_SOAL_TAMPIL = 50;
+        let soalTerpilih = [];
+
+        // 1. LOGIKA MENU PEMILIHAN LEVEL
+        const urlParams = new URLSearchParams(window.location.search);
+        const levelAktif = urlParams.get('level');
+
+        if (levelAktif === 'rendah' || levelAktif === 'tinggi') {
+            // Sembunyikan menu, tampilkan form ujian
+            document.getElementById('menu-container').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'block';
+
+            // Memuat script soal yang dipilih secara dinamis
+            const script = document.createElement('script');
+            script.src = (levelAktif === 'tinggi') ? 'soal2.js' : 'soal.js';
+            
+            // Setelah script termuat, jalankan inisialisasi ujian
+            script.onload = function() {
+                initSoal();
+            };
+            document.body.appendChild(script);
+        }
+
+        function pilihLevel(lvl) {
+            // Reload halaman dengan menyematkan parameter level di URL
+            window.location.href = "?level=" + lvl;
+        }
+
+        // 2. LOGIKA UJIAN
+        function shuffleArray(array) {
+            let curId = array.length;
+            while (0 !== curId) {
+                let randId = Math.floor(Math.random() * curId);
+                curId -= 1;
+                let tmp = array[curId];
+                array[curId] = array[randId];
+                array[randId] = tmp;
+            }
+            return array;
+        }
+
+        function initSoal() {
+            // Mengacak seluruh bank soal dari file JS yang dimuat, lalu potong 50 teratas
+            let soalAcak = shuffleArray([...bankSoal]); 
+            soalTerpilih = soalAcak.slice(0, JML_SOAL_TAMPIL);
+            renderSoal();
+        }
+
+        function renderSoal() {
+            const container = document.getElementById("soal-container");
+            container.innerHTML = ""; 
+
+            soalTerpilih.forEach((soal, index) => {
+                let optionsHtml = '';
+                for(const key in soal.pilihan) {
+                    optionsHtml += `
+                        <label class="opsi-label" id="lbl-${soal.id}-${key}" onclick="pilihOpsi(this, '${soal.id}')">
+                            <input type="radio" name="soal_${soal.id}" value="${key}">
+                            <span><b>${key.toUpperCase()}.</b> ${soal.pilihan[key]}</span>
+                            <svg class="icon-feedback correct-icon" viewBox="0 0 24 24" fill="none" stroke="var(--correct)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                            <svg class="icon-feedback wrong-icon" viewBox="0 0 24 24" fill="none" stroke="var(--wrong)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+                        </label>
+                    `;
+                }
+
+                const cardHtml = `
+                    <div class="soal-card">
+                        <div class="pertanyaan">${index + 1}. ${soal.pertanyaan}</div>
+                        <div class="pilihan-container">
+                            ${optionsHtml}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+            
+            document.getElementById("btnSubmit").style.display = "block";
+        }
+
+        function pilihOpsi(element, soalId) {
+            let parent = element.parentElement;
+            let labels = parent.querySelectorAll('.opsi-label');
+            labels.forEach(lbl => lbl.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        function submitUjian() {
+            let benar = 0;
+            let salah = 0;
+            let kosong = 0;
+
+            soalTerpilih.forEach(soal => {
+                const radios = document.getElementsByName(`soal_${soal.id}`);
+                let jawabanUser = null;
+                for(let i=0; i<radios.length; i++){
+                    if(radios[i].checked) {
+                        jawabanUser = radios[i].value;
+                        break;
+                    }
+                }
+
+                const kunci = soal.jawaban;
+                const labelKunci = document.getElementById(`lbl-${soal.id}-${kunci}`);
+
+                if(jawabanUser === kunci) {
+                    benar++;
+                    labelKunci.classList.add("is-correct"); 
+                } else if(jawabanUser !== null) {
+                    salah++;
+                    const labelUser = document.getElementById(`lbl-${soal.id}-${jawabanUser}`);
+                    labelUser.classList.add("is-wrong");
+                    labelKunci.classList.add("is-correct"); 
+                } else {
+                    kosong++;
+                    labelKunci.classList.add("is-correct");
+                }
+                
+                for(let i=0; i<radios.length; i++){
+                    radios[i].disabled = true;
+                }
+            });
+
+            let skorAkhir = benar * (100 / JML_SOAL_TAMPIL);
+
+            document.getElementById("jmlBenar").innerText = benar;
+            document.getElementById("jmlSalah").innerText = salah + kosong;
+            document.getElementById("finalScore").innerText = Math.round(skorAkhir);
+            document.getElementById("resultModal").style.display = "flex";
+            
+            document.getElementById("btnSubmit").style.display = "none";
+        }
+
+        function ulangiUjian() {
+            document.getElementById("resultModal").style.display = "none";
+            window.scrollTo(0, 0); 
+            initSoal(); 
+        }
+    </script>
+</body>
+</html>
