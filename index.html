@@ -101,14 +101,12 @@
 
         .opsi-label input { display: none; }
 
-        /* Tampilan saat opsi dipilih (sebelum submit) */
         .opsi-label.selected {
             background: rgba(0, 210, 255, 0.2);
             border-color: var(--primary);
             box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
         }
 
-        /* Visual Feedback setelah submit */
         .opsi-label.is-correct {
             background: rgba(16, 185, 129, 0.15) !important;
             border-color: var(--correct) !important;
@@ -120,7 +118,6 @@
             box-shadow: var(--glow-wrong) !important;
         }
         
-        /* Ikon modern faceless */
         .icon-feedback {
             position: absolute; right: 15px; top: 50%;
             transform: translateY(-50%); width: 24px; height: 24px;
@@ -140,11 +137,26 @@
             transition: transform 0.2s, filter 0.2s;
             margin-bottom: 15px;
         }
+        
         .btn-submit:hover, .btn-ulangi:hover, .btn-menu:hover { filter: brightness(1.2); transform: scale(1.02); }
 
         .btn-menu {
             background: linear-gradient(135deg, #374151, #1f2937);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Kelas warna kustom untuk membedakan level soal */
+        .btn-red {
+            background: linear-gradient(135deg, #b91c1c, #ef4444) !important;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4) !important;
+        }
+        .btn-orange {
+            background: linear-gradient(135deg, #b45309, #f59e0b) !important;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4) !important;
+        }
+        .btn-green {
+            background: linear-gradient(135deg, #047857, #10b981) !important;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4) !important;
         }
 
         /* Modal Hasil */
@@ -190,10 +202,9 @@
 
     <!-- MENU PEMILIHAN LEVEL -->
     <div class="container" id="menu-container">
-        <div class="soal-card">
+        <div class="soal-card" id="menu-card">
             <h2 class="menu-title">Pilih Tingkat Kesulitan Ujian</h2>
-            <button class="btn-submit" onclick="pilihLevel('rendah')">Ujian Level 1</button>
-            <button class="btn-submit" style="background: linear-gradient(135deg, #b91c1c, #ef4444); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);" onclick="pilihLevel('tinggi')">Ujian Level 2</button>
+            <!-- Tombol ujian akan ditambahkan secara otomatis oleh JavaScript -->
         </div>
     </div>
 
@@ -229,24 +240,47 @@
         const JML_SOAL_TAMPIL = 50;
         let soalTerpilih = [];
 
-        // 1. LOGIKA MENU PEMILIHAN LEVEL
+        // ==========================================
+        // KONFIGURASI BANK SOAL (TAMBAHKAN DI SINI KELAK)
+        // ==========================================
+        const daftarUjian = [
+            { id: 'level1', label: 'Paket 1', file: 'soal.js', color: '' },
+            { id: 'level2', label: 'Paket 2', file: 'soal2.js', color: 'btn-red' },
+            { id: 'level3', label: 'Paket 3', file: 'soal3.js', color: 'btn-orange' }
+            // Jika ada soal4.js nanti, cukup tambahkan baris baru:
+            // { id: 'level4', label: 'Ujian Level 4', file: 'soal4.js', color: 'btn-green' }
+        ];
+
+        // 1. LOGIKA MENU PEMILIHAN LEVEL & RENDER
         const urlParams = new URLSearchParams(window.location.search);
         const levelAktif = urlParams.get('level');
+        const ujianTerpilih = daftarUjian.find(u => u.id === levelAktif);
 
-        if (levelAktif === 'rendah' || levelAktif === 'tinggi') {
+        if (ujianTerpilih) {
             // Sembunyikan menu, tampilkan form ujian
             document.getElementById('menu-container').style.display = 'none';
             document.getElementById('quiz-container').style.display = 'block';
 
             // Memuat script soal yang dipilih secara dinamis
             const script = document.createElement('script');
-            script.src = (levelAktif === 'tinggi') ? 'soal2.js' : 'soal.js';
+            script.src = ujianTerpilih.file;
             
             // Setelah script termuat, jalankan inisialisasi ujian
             script.onload = function() {
                 initSoal();
             };
             document.body.appendChild(script);
+        } else {
+            // Jika tidak ada level terpilih, Generate Tombol Menu Otomatis
+            const menuCard = document.getElementById('menu-card');
+            daftarUjian.forEach(ujian => {
+                const btn = document.createElement('button');
+                // Gabungkan kelas dasar dan kelas warna khusus
+                btn.className = `btn-submit ${ujian.color}`;
+                btn.innerText = ujian.label;
+                btn.onclick = () => pilihLevel(ujian.id);
+                menuCard.appendChild(btn);
+            });
         }
 
         function pilihLevel(lvl) {
@@ -268,7 +302,6 @@
         }
 
         function initSoal() {
-            // Mengacak seluruh bank soal dari file JS yang dimuat, lalu potong 50 teratas
             let soalAcak = shuffleArray([...bankSoal]); 
             soalTerpilih = soalAcak.slice(0, JML_SOAL_TAMPIL);
             renderSoal();
