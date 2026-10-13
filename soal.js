@@ -89,7 +89,7 @@ const bankSoal = [
     { id: 81, pertanyaan: "Dua huruf setelah huruf C, E, G adalah ….", pilihan: { a: "F : K", b: "G : H", c: "G : I", d: "I : K" }, jawaban: "d" },
     { id: 82, pertanyaan: "Alat pengukur suhu tubuh manusia adalah ….", pilihan: { a: "Ohmmeter", b: "Termometer", c: "Ampermeter", d: "Voltmeter" }, jawaban: "b" },
     { id: 83, pertanyaan: "Surah terpanjang dalam Al-Qur’an adalah ….", pilihan: { a: "Al-Baqarah", b: "Abasa", c: "Ali Imran", d: "An-Naba’" }, jawaban: "a" },
-    { id: 84, pertanyaan: "Manakah di antara pilihan berikut yang beda dengan yang lain?", pilihan: { a: "Al-‘Ashr", b: "An-Nashr", c: "An-Nahl", d: "Al-Iman" }, jawaban: "c" },
+    { id: 84, pertanyaan: "Manakah di antara pilihan berikut yang beda dengan yang lain?", pilihan: { a: "Al-‘Ashr", b: "An-Nashr", c: "An-Nahl", d: "Al-Iman" }, jawaban: "d" },
     { id: 85, pertanyaan: "Manakah di antara huruf berikut yang beda dari yang lainnya?", pilihan: { a: "K", b: "N", c: "V", d: "Y" }, jawaban: "c" },
     { id: 86, pertanyaan: "Dalam Al-Qur’an ada 114 surah. Surah yang ke-113 adalah ….", pilihan: { a: "An-Naas", b: "Al-Ikhlas", c: "Al-Falaq", d: "Al-Ma’un" }, jawaban: "c" },
     { id: 87, pertanyaan: "Kulkas : Listrik = ….", pilihan: { a: "Jam Tangan : Sarung", b: "Selimut : Sarung", c: "Sepatu : Topi", d: "Papan Tulis : Spidol" }, jawaban: "d" },
