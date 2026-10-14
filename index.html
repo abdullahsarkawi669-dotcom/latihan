@@ -170,6 +170,22 @@
     background: linear-gradient(135deg, #7e22ce, #a855f7) !important;
     box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4) !important;
 }
+.btn-cyan {
+    background: linear-gradient(135deg, #0e7490, #06b6d4) !important;
+    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4) !important;
+}
+.btn-sky {
+    background: linear-gradient(135deg, #0369a1, #0ea5e9) !important;
+    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4) !important;
+}
+.btn-gold {
+    background: linear-gradient(135deg, #a16207, #facc15) !important;
+    box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4) !important;
+}
+.btn-silver {
+    background: linear-gradient(135deg, #64748b, #cbd5e1) !important;
+    box-shadow: 0 4px 15px rgba(203, 213, 225, 0.4) !important;
+}
         /* Modal Hasil */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -207,14 +223,14 @@
     <div class="islamic-pattern"></div>
 
     <header class="header">
-        <h1>LATIHAN TES SELEKSI SMP IT PAH</h1>
+        <h1>TES SELEKSI SMP IT PAH</h1>
         <p>Tahun Pelajaran 2027–2028 | 50 Soal Acak per Sesi</p>
     </header>
 
     <!-- MENU PEMILIHAN LEVEL -->
     <div class="container" id="menu-container">
         <div class="soal-card" id="menu-card">
-            <h2 class="menu-title">Pilih Paket Latihan</h2>
+            <h2 class="menu-title">Pilih Tingkat Kesulitan Ujian</h2>
             <!-- Tombol ujian akan ditambahkan secara otomatis oleh JavaScript -->
         </div>
     </div>
@@ -259,7 +275,7 @@
             { id: 'level2', label: 'Paket 2', file: 'soal2.js', color: 'btn-red' },
             { id: 'level3', label: 'Paket 3', file: 'soal3.js', color: 'btn-orange' },
             { id: 'level4', label: 'Paket 4', file: 'soal4.js', color: 'btn-green' },
-			{ id: 'level5', label: 'Paket 5', file: 'soal5.js', color: 'btn-violet' },
+			{ id: 'level5', label: 'Paket 5', file: 'soal5.js', color: 'btn-gold' },
         ];
 
         // 1. LOGIKA MENU PEMILIHAN LEVEL & RENDER
