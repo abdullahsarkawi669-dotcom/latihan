@@ -3,8 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#031526">
+    <meta name="description" content="Aplikasi CBT offline untuk SMP IT Putra Abu Hurairah. Rekam jejak nilai tersimpan otomatis di perangkat Anda.">
     <title>CBT - SMP IT Putra Abu Hurairah</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- PWA: Manifest & Ikon (buku + masjid, tanpa salib) -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="shortcut icon" href="icon.svg">
+
     <style>
         :root {
             --bg-color: #031526;
@@ -18,31 +26,44 @@
             --glow-wrong: 0 0 15px rgba(239, 68, 68, 0.6);
         }
 
+        * { box-sizing: border-box; }
+
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Cairo', sans-serif;
+            /* Font Cairo di-fallback ke font sistem agar tetap rapi saat offline */
+            font-family: 'Tahoma', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
             background-color: var(--bg-color);
-            background-image: 
+            background-image:
                 radial-gradient(circle at 15% 50%, rgba(0, 210, 255, 0.1), transparent 25%),
                 radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.08), transparent 25%);
             color: var(--text-light);
             min-height: 100vh;
         }
 
-        /* Pola Geometris Islami Modern (Faceless & Futuristic) */
+        /* Pola Geometris Islami Modern */
         .islamic-pattern {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l14.14 14.14L60 14.14 45.86 28.28 60 42.42 44.14 42.42 30 56.56 15.86 42.42 0 42.42 14.14 28.28 0 14.14 15.86 14.14z' fill='%2300d2ff' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
             z-index: -1;
+            pointer-events: none;
         }
 
         .header {
             text-align: center;
-            padding: 30px 20px;
+            padding: 30px 20px 20px;
             background: linear-gradient(180deg, rgba(3, 21, 38, 0.95) 0%, transparent 100%);
             border-bottom: 2px solid rgba(0, 210, 255, 0.2);
+            position: relative;
+        }
+
+        .app-logo {
+            width: 80px;
+            height: 80px;
+            display: block;
+            margin: 0 auto 15px;
+            filter: drop-shadow(0 0 12px rgba(0, 210, 255, 0.4));
         }
 
         .header h1 {
@@ -54,6 +75,30 @@
         }
 
         .header p { margin: 5px 0 0; color: #94a3b8; font-size: 0.9rem;}
+
+        /* Status offline/online badge */
+        .conn-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+        .conn-status.offline {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fcd34d;
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+        .conn-status .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 6px currentColor;
+        }
 
         .container {
             max-width: 800px;
@@ -117,17 +162,17 @@
             border-color: var(--wrong) !important;
             box-shadow: var(--glow-wrong) !important;
         }
-        
+
         .icon-feedback {
             position: absolute; right: 15px; top: 50%;
             transform: translateY(-50%); width: 24px; height: 24px;
             display: none;
         }
-        
+
         .is-correct .icon-feedback.correct-icon { display: block; }
         .is-wrong .icon-feedback.wrong-icon { display: block; }
 
-        .btn-submit, .btn-ulangi, .btn-menu {
+        .btn-submit, .btn-ulangi, .btn-menu, .btn-secondary, .btn-riwayat {
             display: block; width: 100%;
             padding: 15px; font-size: 1.2rem; font-weight: bold;
             font-family: inherit; color: #fff;
@@ -137,12 +182,24 @@
             transition: transform 0.2s, filter 0.2s;
             margin-bottom: 15px;
         }
-        
-        .btn-submit:hover, .btn-ulangi:hover, .btn-menu:hover { filter: brightness(1.2); transform: scale(1.02); }
 
-        .btn-menu {
+        .btn-submit:hover, .btn-ulangi:hover, .btn-menu:hover, .btn-secondary:hover, .btn-riwayat:hover {
+            filter: brightness(1.2); transform: scale(1.02);
+        }
+
+        .btn-menu, .btn-secondary {
             background: linear-gradient(135deg, #374151, #1f2937);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-riwayat {
+            background: linear-gradient(135deg, #6d28d9, #a855f7);
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #b91c1c, #ef4444) !important;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4) !important;
         }
 
         /* Kelas warna kustom untuk membedakan level soal */
@@ -158,45 +215,57 @@
             background: linear-gradient(135deg, #047857, #10b981) !important;
             box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4) !important;
         }
-.btn-indigo {
-    background: linear-gradient(135deg, #3730a3, #6366f1) !important;
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4) !important;
-}
-.btn-violet {
-    background: linear-gradient(135deg, #6d28d9, #8b5cf6) !important;
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4) !important;
-}
-.btn-purple {
-    background: linear-gradient(135deg, #7e22ce, #a855f7) !important;
-    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4) !important;
-}
-.btn-cyan {
-    background: linear-gradient(135deg, #0e7490, #06b6d4) !important;
-    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4) !important;
-}
-.btn-sky {
-    background: linear-gradient(135deg, #0369a1, #0ea5e9) !important;
-    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4) !important;
-}
-.btn-gold {
-    background: linear-gradient(135deg, #a16207, #facc15) !important;
-    box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4) !important;
-}
-.btn-silver {
-    background: linear-gradient(135deg, #64748b, #cbd5e1) !important;
-    box-shadow: 0 4px 15px rgba(203, 213, 225, 0.4) !important;
-}
+        .btn-blue {
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6) !important;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4) !important;
+        }
+
+        /* Wrapper tombol paket + badge */
+        .paket-wrapper {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .paket-wrapper .btn-submit { margin-bottom: 0; }
+
+        .paket-badge {
+            position: absolute;
+            top: -8px; right: 10px;
+            background: linear-gradient(135deg, #10b981, #047857);
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.5);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            letter-spacing: 0.3px;
+        }
+        .paket-badge .star {
+            color: #fde68a;
+        }
+        .paket-meta {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            margin-top: 6px;
+            padding: 0 4px;
+        }
+        .paket-meta .done { color: #6ee7b7; }
+        .paket-meta .empty { color: #64748b; }
+
         /* Modal Hasil */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px);
             display: none; justify-content: center; align-items: center; z-index: 100;
+            padding: 20px;
         }
         .modal-content {
             background: var(--card-bg); border: 1px solid var(--primary);
-            padding: 40px; border-radius: 20px; text-align: center;
+            padding: 30px; border-radius: 20px; text-align: center;
             box-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
-            max-width: 400px; width: 90%;
+            max-width: 420px; width: 100%;
             max-height: 90vh; overflow-y: auto;
         }
         .score-circle {
@@ -205,16 +274,114 @@
             display: flex; justify-content: center; align-items: center;
             margin: 0 auto 20px; font-size: 2.5rem; font-weight: bold;
             border: 4px solid var(--primary); box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
+            color: #fff;
         }
-        .score-details p { margin: 10px 0; font-size: 1.1rem; }
+        .score-details p { margin: 8px 0; font-size: 1.05rem; }
         .text-green { color: var(--correct); font-weight: bold; }
         .text-red { color: var(--wrong); font-weight: bold; }
-        
+        .text-muted { color: #94a3b8; font-size: 0.85rem; }
+
         .menu-title {
             color: var(--primary);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-size: 1.5rem;
             text-align: center;
+        }
+
+        /* ====== Halaman Riwayat ====== */
+        .riwayat-empty {
+            text-align: center;
+            color: #94a3b8;
+            padding: 40px 20px;
+            font-size: 1rem;
+        }
+        .riwayat-empty .icon-big {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+        .riwayat-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .riwayat-summary .stat {
+            background: rgba(0, 210, 255, 0.08);
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            border-radius: 10px;
+            padding: 12px 8px;
+            text-align: center;
+        }
+        .riwayat-summary .stat .num {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+        }
+        .riwayat-summary .stat .label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            display: block;
+            margin-top: 2px;
+        }
+        .riwayat-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: border-color 0.2s;
+        }
+        .riwayat-item:hover { border-color: rgba(0, 210, 255, 0.3); }
+        .riwayat-item .score-pill {
+            min-width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #fff;
+            border: 3px solid;
+        }
+        .riwayat-item .score-pill.lulus { background: rgba(16, 185, 129, 0.2); border-color: var(--correct); color: #6ee7b7; }
+        .riwayat-item .score-pill.remidi { background: rgba(239, 68, 68, 0.2); border-color: var(--wrong); color: #fca5a5; }
+        .riwayat-item .meta .paket-name {
+            font-weight: 600;
+            color: #e0f2fe;
+            margin-bottom: 2px;
+        }
+        .riwayat-item .meta .info {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        .riwayat-item .meta .info .text-green { font-size: 0.8rem; }
+        .riwayat-item .meta .info .text-red   { font-size: 0.8rem; }
+        .riwayat-item .time {
+            font-size: 0.72rem;
+            color: #64748b;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .btn-row {
+            display: flex; gap: 10px;
+        }
+        .btn-row > button { margin-bottom: 0; }
+
+        /* Footer kecil */
+        .app-footer {
+            text-align: center;
+            padding: 20px;
+            color: #475569;
+            font-size: 0.75rem;
         }
     </style>
 </head>
@@ -223,26 +390,51 @@
     <div class="islamic-pattern"></div>
 
     <header class="header">
-        <h1>LATIHAN TES SELEKSI SMP IT PAH</h1>
-        <p>Tahun Pelajaran 20xx–20yy | 50 Soal Acak per Sesi</p>
+        <!-- Ikon App: Buku + Masjid (tanpa salib) -->
+        <img src="icon.svg" alt="Logo CBT PAH" class="app-logo">
+        <h1>TES SELEKSI SMP IT PAH</h1>
+        <p>Tahun Pelajaran 2027-2028 | 50 Soal Acak per Sesi</p>
+        <div id="connStatus" class="conn-status">
+            <span class="dot"></span><span id="connLabel">Memeriksa koneksi...</span>
+        </div>
     </header>
 
-    <!-- MENU PEMILIHAN LEVEL -->
+    <!-- ============ MENU PEMILIHAN LEVEL ============ -->
     <div class="container" id="menu-container">
         <div class="soal-card" id="menu-card">
-            <h2 class="menu-title">Pilih Paket Latihan</h2>
-            <!-- Tombol ujian akan ditambahkan secara otomatis oleh JavaScript -->
+            <h2 class="menu-title">Pilih Tingkat Kesulitan Ujian</h2>
+            <!-- Tombol ujian dibuat otomatis oleh JavaScript -->
+            <div id="paket-list"></div>
+            <button type="button" class="btn-riwayat" onclick="bukaRiwayat()">
+                Lihat Rekam Jejak Nilai
+            </button>
         </div>
     </div>
 
-    <!-- KONTAINER UJIAN (Disembunyikan di awal) -->
+    <!-- ============ KONTAINER UJIAN ============ -->
     <div class="container" id="quiz-container" style="display: none;">
+        <div id="quiz-header" style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+            <strong id="quiz-title" style="color:var(--primary); font-size:1.1rem;"></strong>
+            <button type="button" class="btn-secondary" style="width:auto; margin:0; padding:8px 16px; font-size:0.9rem;" onclick="kembaliKeMenu()">Kembali</button>
+        </div>
         <form id="quiz-form">
             <div id="soal-container">
-                <!-- Soal akan di-generate via JavaScript di sini -->
+                <!-- Soal di-generate via JavaScript -->
             </div>
-            <button type="button" class="btn-submit" onclick="submitUjian()" id="btnSubmit">Selesai & Cek Skor</button>
+            <button type="button" class="btn-submit" onclick="submitUjian()" id="btnSubmit">Selesai &amp; Cek Skor</button>
         </form>
+    </div>
+
+    <!-- ============ KONTAINER RIWAYAT ============ -->
+    <div class="container" id="riwayat-container" style="display: none;">
+        <div class="soal-card">
+            <h2 class="menu-title">Rekam Jejak Nilai</h2>
+            <div id="riwayat-body"></div>
+            <div class="btn-row" style="margin-top:20px;">
+                <button type="button" class="btn-menu" onclick="kembaliKeMenu()">Kembali ke Menu</button>
+                <button type="button" class="btn-danger" id="btnClearRiwayat" onclick="konfirmasiHapusRiwayat()">Hapus Riwayat</button>
+            </div>
+        </div>
     </div>
 
     <!-- Modal Hasil -->
@@ -253,176 +445,544 @@
             <div class="score-details">
                 <p>Jawaban Benar : <span class="text-green" id="jmlBenar">0</span></p>
                 <p>Jawaban Salah : <span class="text-red" id="jmlSalah">0</span></p>
+                <p id="rowBest" style="display:none;">Skor Terbaik : <span id="bestScoreLbl" style="color:#a855f7; font-weight:bold;">0</span></p>
             </div>
             <br>
             <button type="button" class="btn-ulangi" onclick="ulangiUjian()">Ulangi (Acak Soal Baru)</button>
-            <button type="button" class="btn-menu" onclick="window.location.href='index.html'">Kembali ke Menu Utama</button>
-            
-            <p style="margin-top: 15px; font-size: 0.9rem; color: #94a3b8;">Tutup popup ini untuk melihat kunci di mana letak salahnya.</p>
+            <button type="button" class="btn-menu" onclick="kembaliKeMenu()">Kembali ke Menu Utama</button>
+
+            <p class="text-muted" style="margin-top: 15px;">Tutup popup ini untuk melihat kunci jawaban & pembahasan.</p>
             <button onclick="document.getElementById('resultModal').style.display='none'" style="background:transparent; border:1px solid #fff; color:#fff; padding: 5px 15px; border-radius: 5px; cursor:pointer; margin-top:10px;">Tutup</button>
         </div>
     </div>
 
+    <footer class="app-footer">
+        Aplikasi berjalan offline &middot; Riwayat tersimpan di perangkat ini
+    </footer>
+
     <script>
-        const JML_SOAL_TAMPIL = 50;
-        let soalTerpilih = [];
+    /* =================================================================
+       1) KONFIGURASI & STATE
+       ================================================================= */
+    const JML_SOAL_TAMPIL = 50;
+    const STORAGE_KEY = 'cbt_pah_riwayat_v1'; // key localStorage
 
-        // ==========================================
-        // KONFIGURASI BANK SOAL (TAMBAHKAN DI SINI KELAK)
-        // ==========================================
-        const daftarUjian = [
-            { id: 'level1', label: 'Paket 1', file: 'soal1.js', color: '' },
-            { id: 'level2', label: 'Paket 2', file: 'soal2.js', color: 'btn-red' },
-            { id: 'level3', label: 'Paket 3', file: 'soal3.js', color: 'btn-orange' },
-            { id: 'level4', label: 'Paket 4', file: 'soal4.js', color: 'btn-green' },
-			{ id: 'level5', label: 'Paket 5', file: 'soal5.js', color: 'btn-silver' },
-        ];
+    let soalTerpilih = [];
+    let ujianAktif = null;       // {id, label, color, file}
+    let hasilTerakhir = null;    // {benar, salah, kosong, skor}
 
-        // 1. LOGIKA MENU PEMILIHAN LEVEL & RENDER
-        const urlParams = new URLSearchParams(window.location.search);
-        const levelAktif = urlParams.get('level');
-        const ujianTerpilih = daftarUjian.find(u => u.id === levelAktif);
+    const daftarUjian = [
+        { id: 'level1', label: 'Paket 1', file: 'soal1.js', color: '' },
+        { id: 'level2', label: 'Paket 2', file: 'soal2.js', color: 'btn-red' },
+        { id: 'level3', label: 'Paket 3', file: 'soal3.js', color: 'btn-orange' },
+        { id: 'level4', label: 'Paket 4', file: 'soal4.js', color: 'btn-green' },
+        { id: 'level5', label: 'Paket 5', file: 'soal5.js', color: 'btn-blue' },
+    ];
 
-        if (ujianTerpilih) {
-            // Sembunyikan menu, tampilkan form ujian
-            document.getElementById('menu-container').style.display = 'none';
-            document.getElementById('quiz-container').style.display = 'block';
+    /* =================================================================
+       2) BANK SOAL Fallback (offline, tanpa file soal1-5.js)
+       Dipakai HANYA jika file soalX.js gagal dimuat / tidak ada.
+       ================================================================= */
+    const bankSoalFallback = [
+        { id: 'f1',  pertanyaan: 'Rukun Islam yang pertama adalah?', pilihan: {a:'Shalat', b:'Syahadat', c:'Puasa', d:'Zakat'}, jawaban: 'b' },
+        { id: 'f2',  pertanyaan: 'Jumlah rakaat shalat Maghrib adalah?', pilihan: {a:'2', b:'3', c:'4', d:'5'}, jawaban: 'b' },
+        { id: 'f3',  pertanyaan: 'Kitab suci umat Islam adalah?', pilihan: {a:'Taurat', b:'Zabur', c:'Injil', d:'Al-Quran'}, jawaban: 'd' },
+        { id: 'f4',  pertanyaan: 'Nabi terakhir yang diutus Allah adalah?', pilihan: {a:'Nabi Isa', b:'Nabi Musa', c:'Nabi Muhammad', d:'Nabi Ibrahim'}, jawaban: 'c' },
+        { id: 'f5',  pertanyaan: 'Shalat wajib dilakukan dalam sehari semalam sebanyak?', pilihan: {a:'3 kali', b:'4 kali', c:'5 kali', d:'6 kali'}, jawaban: 'c' },
+        { id: 'f6',  pertanyaan: 'Bulan diwajibkannya puasa Ramadhan adalah bulan?', pilihan: {a:'Syawal', b:'Ramadhan', c:'Muharram', d:'Dzulhijjah'}, jawaban: 'b' },
+        { id: 'f7',  pertanyaan: 'Ibukota Indonesia adalah?', pilihan: {a:'Bandung', b:'Surabaya', c:'Jakarta', d:'Medan'}, jawaban: 'c' },
+        { id: 'f8',  pertanyaan: 'Hasil dari 12 x 8 adalah?', pilihan: {a:'96', b:'86', c:'108', d:'104'}, jawaban: 'a' },
+        { id: 'f9',  pertanyaan: 'Air dapat berubah menjadi padat (es) pada suhu?', pilihan: {a:'0 derajat Celsius', b:'10 derajat Celsius', c:'100 derajat Celsius', d:'50 derajat Celsius'}, jawaban: 'a' },
+        { id: 'f10', pertanyaan: 'Pulau terbesar di Indonesia adalah?', pilihan: {a:'Jawa', b:'Sumatera', c:'Kalimantan', d:'Sulawesi'}, jawaban: 'c' },
+        { id: 'f11', pertanyaan: 'Surat pertama dalam Al-Quran adalah?', pilihan: {a:'Al-Baqarah', b:'Al-Fatihah', c:'An-Nas', d:'Al-Ikhlas'}, jawaban: 'b' },
+        { id: 'f12', pertanyaan: 'Jumlah nabi dan rasul yang wajib diketahui (Ulul Azmi) adalah?', pilihan: {a:'25', b:'15', c:'10', d:'5'}, jawaban: 'a' },
+        { id: 'f13', pertanyaan: 'Lawan kata dari "besar" adalah?', pilihan: {a:'Tinggi', b:'Kecil', c:'Lebar', d:'Sempit'}, jawaban: 'b' },
+        { id: 'f14', pertanyaan: 'Planet terdekat dengan matahari adalah?', pilihan: {a:'Venus', b:'Bumi', c:'Merkurius', d:'Mars'}, jawaban: 'c' },
+        { id: 'f15', pertanyaan: 'Hari kiamat disebut juga?', pilihan: {a:'Hari Akhir', b:'Hari Libur', c:'Hari Raya', d:'Hari Jumat'}, jawaban: 'a' },
+        { id: 'f16', pertanyaan: 'Wudu dilakukan sebelum?', pilihan: {a:'Makan', b:'Tidur', c:'Shalat', d:'Bermain'}, jawaban: 'c' },
+        { id: 'f17', pertanyaan: 'Hasil dari 7 + 8 adalah?', pilihan: {a:'13', b:'14', c:'15', d:'16'}, jawaban: 'c' },
+        { id: 'f18', pertanyaan: 'Bahasa resmi Indonesia adalah?', pilihan: {a:'Bahasa Inggris', b:'Bahasa Indonesia', c:'Bahasa Jawa', d:'Bahasa Melayu'}, jawaban: 'b' },
+        { id: 'f19', pertanyaan: 'Tempat ibadah umat Islam adalah?', pilihan: {a:'Gereja', b:'Pura', c:'Masjid', d:'Vihara'}, jawaban: 'c' },
+        { id: 'f20', pertanyaan: 'Surat An-Nas terdiri dari berapa ayat?', pilihan: {a:'5 ayat', b:'6 ayat', c:'7 ayat', d:'8 ayat'}, jawaban: 'b' },
+        { id: 'f21', pertanyaan: 'Bendera Indonesia berwarna?', pilihan: {a:'Putih merah', b:'Merah putih', c:'Merah hijau', d:'Putih biru'}, jawaban: 'b' },
+        { id: 'f22', pertanyaan: 'Binatang yang membawa tulang punggung (vertebrata) disebut?', pilihan: {a:'Invertebrata', b:'Vertebrata', c:'Mamalia', d:'Reptil'}, jawaban: 'b' },
+        { id: 'f23', pertanyaan: 'Shalat Jumat dilaksanakan di?', pilihan: {a:'Rumah', b:'Pasar', c:'Masjid', d:'Sekolah'}, jawaban: 'c' },
+        { id: 'f24', pertanyaan: 'Pancasila terdiri dari berapa sila?', pilihan: {a:'3', b:'4', c:'5', d:'6'}, jawaban: 'c' },
+        { id: 'f25', pertanyaan: 'Hasil dari 100 : 4 adalah?', pilihan: {a:'20', b:'25', c:'30', d:'40'}, jawaban: 'b' },
+        { id: 'f26', pertanyaan: 'Bulan puasa diakhiri dengan hari raya?', pilihan: {a:'Idul Adha', b:'Idul Fitri', c:'Maulid Nabi', d:'Tahun Baru Hijriyah'}, jawaban: 'b' },
+        { id: 'f27', pertanyaan: 'Jumlah hari dalam seminggu adalah?', pilihan: {a:'5', b:'6', c:'7', d:'8'}, jawaban: 'c' },
+        { id: 'f28', pertanyaan: 'Arti dari kata "tasbih" adalah?', pilihan: {a:'Mengagungkan Allah', b:'Memuji makhluk', c:'Bermain', d:'Bekerja'}, jawaban: 'a' },
+        { id: 'f29', pertanyaan: 'Lambang negara Indonesia adalah?', pilihan: {a:'Burung Merpati', b:'Garuda Pancasila', c:'Burung Elang', d:'Naga'}, jawaban: 'b' },
+        { id: 'f30', pertanyaan: 'Hasil dari 9 x 9 adalah?', pilihan: {a:'72', b:'81', c:'90', d:'99'}, jawaban: 'b' },
+        { id: 'f31', pertanyaan: 'Dalam shalat, gerakan rukuk dilakukan setelah?', pilihan: {a:'Sujud', b:'Takbiratul ihram', c:'Salam', d:'Duduk'}, jawaban: 'b' },
+        { id: 'f32', pertanyaan: 'Zakat yang wajib dikeluarkan di bulan Ramadhan adalah?', pilihan: {a:'Zakat Mal', b:'Zakat Fitrah', c:'Zakat Profesi', d:'Zakat Perdagangan'}, jawaban: 'b' },
+        { id: 'f33', pertanyaan: 'Pulau yang terkenal dengan candi Borobudur adalah?', pilihan: {a:'Sumatera', b:'Jawa', c:'Bali', d:'Lombok'}, jawaban: 'b' },
+        { id: 'f34', pertanyaan: 'Malaikat yang bertugas mencatat amal baik manusia adalah?', pilihan: {a:'Jibril', b:'Mikail', c:'Raqib', d:'Israfil'}, jawaban: 'c' },
+        { id: 'f35', pertanyaan: 'Hasil dari 5 x 5 + 5 adalah?', pilihan: {a:'25', b:'30', c:'35', d:'40'}, jawaban: 'b' },
+        { id: 'f36', pertanyaan: 'Tata surya kita terdiri dari ... planet?', pilihan: {a:'7', b:'8', c:'9', d:'10'}, jawaban: 'b' },
+        { id: 'f37', pertanyaan: 'Wahyu pertama yang diterima Nabi Muhammad SAW adalah?', pilihan: {a:'Surat Al-Alaq', b:'Surat Al-Fatihah', c:'Surat Al-Ikhlas', d:'Surat An-Nas'}, jawaban: 'a' },
+        { id: 'f38', pertanyaan: 'Proses tumbuhan membuat makanannya sendiri disebut?', pilihan: {a:'Respirasi', b:'Fotosintesis', c:'Transpirasi', d:'Evaporasi'}, jawaban: 'b' },
+        { id: 'f39', pertanyaan: 'Pahlawan yang dikenal sebagai Bapak Proklamator adalah?', pilihan: {a:'Soekarno', b:'Soeharto', c:'Hatta', d:'Sudirman'}, jawaban: 'a' },
+        { id: 'f40', pertanyaan: 'Surat dalam Al-Quran yang tidak diawali dengan Basmalah adalah?', pilihan: {a:'Al-Baqarah', b:'At-Taubah', c:'Yasin', d:'Al-Mulk'}, jawaban: 'b' },
+        { id: 'f41', pertanyaan: 'Jumlah surat dalam Al-Quran adalah?', pilihan: {a:'114', b:'100', c:'120', d:'99'}, jawaban: 'a' },
+        { id: 'f42', pertanyaan: 'Hasil dari 144 : 12 adalah?', pilihan: {a:'10', b:'11', c:'12', d:'13'}, jawaban: 'c' },
+        { id: 'f43', pertanyaan: 'Singa hidup di habitat?', pilihan: {a:'Laut', b:'Hutan', c:'Padang pasir/savana', d:'Gunung'}, jawaban: 'c' },
+        { id: 'f44', pertanyaan: 'Shalat sunnah sebelum shalat wajib disebut?', pilihan: {a:'Ba\'dah', b:'Qabliyah', c:'Wajib', d:'Sunnah mutlak'}, jawaban: 'b' },
+        { id: 'f45', pertanyaan: 'Negara di Asia Tenggara dengan penduduk terbanyak adalah?', pilihan: {a:'Malaysia', b:'Thailand', c:'Indonesia', d:'Vietnam'}, jawaban: 'c' },
+        { id: 'f46', pertanyaan: 'Tokoh ilmuwan yang mengemukakan teori relativitas adalah?', pilihan: {a:'Isaac Newton', b:'Albert Einstein', c:'Thomas Edison', d:'Galileo Galilei'}, jawaban: 'b' },
+        { id: 'f47', pertanyaan: 'Imam yang diikuti dalam shalat berjamaah disebut?', pilihan: {a:'Ma\'mum', b:'Mu\'adzin', c:'Khatib', d:'Bilal'}, jawaban: 'a' },
+        { id: 'f48', pertanyaan: 'Satuan waktu internasional (SI) adalah?', pilihan: {a:'Menit', b:'Jam', c:'Detik', d:'Hari'}, jawaban: 'c' },
+        { id: 'f49', pertanyaan: 'Hewan yang mengalami metamorfosis sempurna adalah?', pilihan: {a:'Ayam', b:'Kupu-kupu', c:'Ulat', d:'Cacing'}, jawaban: 'b' },
+        { id: 'f50', pertanyaan: 'Membaca Al-Quran akan mendapat pahala untuk setiap hurufnya sebanyak?', pilihan: {a:'1 kebaikan', b:'5 kebaikan', c:'10 kebaikan', d:'100 kebaikan'}, jawaban: 'c' },
+        { id: 'f51', pertanyaan: 'Sebelum shalat, kita harus berwudu untuk mensucikan?', pilihan: {a:'Hati', b:'Fisik dan rohani', c:'Pakaian', d:'Tempat'}, jawaban: 'b' },
+        { id: 'f52', pertanyaan: 'Bacaan ketika takbiratul ihram adalah?', pilihan: {a:'Allahu Akbar', b:'Bismillah', c:'Hamdalah', d:'Salam'}, jawaban: 'a' },
+        { id: 'f53', pertanyaan: 'Hasil dari 0.5 x 20 adalah?', pilihan: {a:'5', b:'10', c:'15', d:'20'}, jawaban: 'b' },
+        { id: 'f54', pertanyaan: 'Pohon yang kayunya kuat untuk membuat kapal adalah?', pilihan: {a:'Pohon mangga', b:'Pohon jati', c:'Pohon pisang', d:'Pohon bambu'}, jawaban: 'b' },
+        { id: 'f55', pertanyaan: 'Hari besar Islam yang dilakukan dengan berkurban disebut?', pilihan: {a:'Idul Fitri', b:'Idul Adha', c:'Maulid Nabi', d:'Tahun Baru Masehi'}, jawaban: 'b' },
+        { id: 'f56', pertanyaan: 'Hasil dari 81 - 47 adalah?', pilihan: {a:'34', b:'44', c:'24', d:'54'}, jawaban: 'a' },
+        { id: 'f57', pertanyaan: 'Arti "Bismillahirrahmanirrahim" adalah?', pilihan: {a:'Dengan nama Allah Yang Maha Pengasih lagi Maha Penyayang', b:'Segala puji bagi Allah', c:'Allah Maha Besar', d:'Tiada Tuhan selain Allah'}, jawaban: 'a' },
+        { id: 'f58', pertanyaan: 'Ibukota provinsi Jawa Barat adalah?', pilihan: {a:'Bandung', b:'Bogor', c:'Bekasi', d:'Cirebon'}, jawaban: 'a' },
+        { id: 'f59', pertanyaan: 'Dalam wudu, bagian tubuh yang dicuci sebanyak 3 kali, KECUALI?', pilihan: {a:'Tangan', b:'Muka', c:'Kepala (dusap)', d:'Kaki'}, jawaban: 'c' },
+        { id: 'f60', pertanyaan: 'Hasil dari 25% dari 200 adalah?', pilihan: {a:'25', b:'50', c:'75', d:'100'}, jawaban: 'b' }
+    ];
 
-            // Memuat script soal yang dipilih secara dinamis
-            const script = document.createElement('script');
-            script.src = ujianTerpilih.file;
-            
-            // Setelah script termuat, jalankan inisialisasi ujian
-            script.onload = function() {
-                initSoal();
-            };
-            document.body.appendChild(script);
-        } else {
-            // Jika tidak ada level terpilih, Generate Tombol Menu Otomatis
-            const menuCard = document.getElementById('menu-card');
-            daftarUjian.forEach(ujian => {
-                const btn = document.createElement('button');
-                // Gabungkan kelas dasar dan kelas warna khusus
-                btn.className = `btn-submit ${ujian.color}`;
-                btn.innerText = ujian.label;
-                btn.onclick = () => pilihLevel(ujian.id);
-                menuCard.appendChild(btn);
-            });
+    /* =================================================================
+       3) UTIL: localStorage untuk REKAM JEJAK NILAI
+       ================================================================= */
+    function getRiwayat() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            console.warn('Gagal membaca riwayat:', e);
+            return [];
         }
+    }
 
-        function pilihLevel(lvl) {
-            // Reload halaman dengan menyematkan parameter level di URL
-            window.location.href = "?level=" + lvl;
+    function simpanRiwayat(arr) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+            return true;
+        } catch (e) {
+            console.warn('Gagal menyimpan riwayat:', e);
+            return false;
         }
+    }
 
-        // 2. LOGIKA UJIAN
-        function shuffleArray(array) {
-            let curId = array.length;
-            while (0 !== curId) {
-                let randId = Math.floor(Math.random() * curId);
-                curId -= 1;
-                let tmp = array[curId];
-                array[curId] = array[randId];
-                array[randId] = tmp;
+    function tambahRiwayat(paket, skor, benar, salah, total) {
+        const riwayat = getRiwayat();
+        const entri = {
+            id: Date.now(),
+            paketId: paket.id,
+            paketLabel: paket.label,
+            skor: Math.round(skor),
+            benar: benar,
+            salah: salah + (total - benar - salah),
+            total: total,
+            waktu: new Date().toISOString()
+        };
+        riwayat.push(entri);
+        simpanRiwayat(riwayat);
+        return entri;
+    }
+
+    function getBestScore(paketId) {
+        const riwayat = getRiwayat().filter(r => r.paketId === paketId);
+        if (riwayat.length === 0) return null;
+        return riwayat.reduce((best, cur) => cur.skor > best.skor ? cur : best);
+    }
+
+    function getStatPaket(paketId) {
+        const riwayat = getRiwayat().filter(r => r.paketId === paketId);
+        if (riwayat.length === 0) return { attempts: 0, best: null, last: null };
+        const best = riwayat.reduce((b, c) => c.skor > b.skor ? c : b);
+        const last = riwayat[riwayat.length - 1];
+        return { attempts: riwayat.length, best: best, last: last };
+    }
+
+    function getRingkasan() {
+        const riwayat = getRiwayat();
+        const total = riwayat.length;
+        const lulus = riwayat.filter(r => r.skor >= 70).length;
+        const best = total ? Math.max(...riwayat.map(r => r.skor)) : 0;
+        const paketUnik = new Set(riwayat.map(r => r.paketId)).size;
+        return { total, lulus, best, paketUnik };
+    }
+
+    function hapusRiwayat() {
+        localStorage.removeItem(STORAGE_KEY);
+        renderMenu();
+        renderRiwayat();
+    }
+
+    /* =================================================================
+       4) ROUTING ANTAR VIEW
+       ================================================================= */
+    function showView(view) {
+        document.getElementById('menu-container').style.display    = view === 'menu'    ? 'block' : 'none';
+        document.getElementById('quiz-container').style.display    = view === 'quiz'    ? 'block' : 'none';
+        document.getElementById('riwayat-container').style.display = view === 'riwayat' ? 'block' : 'none';
+        window.scrollTo({ top: 0, behavior: 'instant' });
+
+        // Update URL tanpa reload (untuk konsumsi refresh & share)
+        const params = new URLSearchParams();
+        if (view === 'quiz' && ujianAktif) params.set('level', ujianAktif.id);
+        else if (view === 'riwayat') params.set('view', 'riwayat');
+        const qs = params.toString();
+        const newUrl = qs ? `?${qs}` : window.location.pathname;
+        try {
+            history.replaceState({}, '', newUrl);
+        } catch (e) { /* ignore */ }
+    }
+
+    function kembaliKeMenu() {
+        // Tutup modal hasil kalau terbuka
+        document.getElementById('resultModal').style.display = 'none';
+        ujianAktif = null;
+        soalTerpilih = [];
+        showView('menu');
+        renderMenu();
+    }
+
+    function bukaRiwayat() {
+        showView('riwayat');
+        renderRiwayat();
+    }
+
+    /* =================================================================
+       5) RENDER MENU (dengan badge "sudah dikerjakan")
+       ================================================================= */
+    function renderMenu() {
+        const list = document.getElementById('paket-list');
+        list.innerHTML = '';
+        daftarUjian.forEach(ujian => {
+            const stat = getStatPaket(ujian.id);
+            const wrapper = document.createElement('div');
+            wrapper.className = 'paket-wrapper';
+
+            const btn = document.createElement('button');
+            btn.className = `btn-submit ${ujian.color || ''}`;
+            btn.innerText = ujian.label;
+            btn.onclick = () => pilihLevel(ujian);
+            wrapper.appendChild(btn);
+
+            if (stat.attempts > 0) {
+                const badge = document.createElement('span');
+                badge.className = 'paket-badge';
+                badge.innerHTML = `<span class="star">&#9733;</span> ${stat.best.skor}`;
+                wrapper.appendChild(badge);
+
+                const meta = document.createElement('div');
+                meta.className = 'paket-meta';
+                meta.innerHTML = `<span class="done">Sudah dikerjakan ${stat.attempts}x</span> &middot; Skor terakhir: ${stat.last.skor}`;
+                wrapper.appendChild(meta);
+            } else {
+                const meta = document.createElement('div');
+                meta.className = 'paket-meta';
+                meta.innerHTML = `<span class="empty">Belum pernah dikerjakan</span>`;
+                wrapper.appendChild(meta);
             }
-            return array;
-        }
 
-        function initSoal() {
-            let soalAcak = shuffleArray([...bankSoal]); 
-            soalTerpilih = soalAcak.slice(0, JML_SOAL_TAMPIL);
-            renderSoal();
-        }
+            list.appendChild(wrapper);
+        });
+    }
 
-        function renderSoal() {
-            const container = document.getElementById("soal-container");
-            container.innerHTML = ""; 
+    /* =================================================================
+       6) PILIH LEVEL & MEMUAT BANK SOAL
+       ================================================================= */
+    function pilihLevel(ujian) {
+        ujianAktif = ujian;
+        document.getElementById('quiz-title').innerText = `${ujian.label} - Tunggu sebentar, memuat soal...`;
+        showView('quiz');
 
-            soalTerpilih.forEach((soal, index) => {
-                let optionsHtml = '';
-                for(const key in soal.pilihan) {
-                    optionsHtml += `
-                        <label class="opsi-label" id="lbl-${soal.id}-${key}" onclick="pilihOpsi(this, '${soal.id}')">
-                            <input type="radio" name="soal_${soal.id}" value="${key}">
-                            <span><b>${key.toUpperCase()}.</b> ${soal.pilihan[key]}</span>
-                            <svg class="icon-feedback correct-icon" viewBox="0 0 24 24" fill="none" stroke="var(--correct)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                            <svg class="icon-feedback wrong-icon" viewBox="0 0 24 24" fill="none" stroke="var(--wrong)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
-                        </label>
-                    `;
+        // Reset area soal
+        document.getElementById('soal-container').innerHTML =
+            '<div class="soal-card" style="text-align:center; color:#94a3b8;">Memuat soal...</div>';
+
+        // Coba muat file soal eksternal (soal1.js..soal5.js)
+        // Jika gagal (offline & belum ter-cache), gunakan bank soal fallback.
+        muatBankSoal(ujian.file, function(ok) {
+            if (ok && window.bankSoal && bankSoal.length > 0) {
+                document.getElementById('quiz-title').innerText = ujian.label;
+                initSoal();
+            } else {
+                window.bankSoal = [...bankSoalFallback];
+                document.getElementById('quiz-title').innerText = ujian.label + ' (Mode Offline - Soal Demo)';
+                initSoal();
+            }
+        });
+    }
+
+    function muatBankSoal(file, callback) {
+        // Cek apakah file sudah ter-cache di SW / sudah pernah dimuat
+        try {
+            const existing = document.querySelector(`script[data-soal="${file}"]`);
+            if (existing) {
+                if (window.bankSoal && window.bankSoal.length) {
+                    callback(true); return;
                 }
+            }
+        } catch(e) {}
 
-                const cardHtml = `
-                    <div class="soal-card">
-                        <div class="pertanyaan">${index + 1}. ${soal.pertanyaan}</div>
-                        <div class="pilihan-container">
-                            ${optionsHtml}
+        const script = document.createElement('script');
+        script.src = file;
+        script.dataset.soal = file;
+        let done = false;
+        script.onload = function() {
+            if (done) return; done = true;
+            callback(!!(window.bankSoal && window.bankSoal.length));
+        };
+        script.onerror = function() {
+            if (done) return; done = true;
+            callback(false);
+        };
+        // Timeout 6 detik (jika SW blm siap & jaringan hang)
+        setTimeout(() => {
+            if (done) return; done = true;
+            callback(!!(window.bankSoal && window.bankSoal.length));
+        }, 6000);
+        document.body.appendChild(script);
+    }
+
+    /* =================================================================
+       7) LOGIKA UJIAN
+       ================================================================= */
+    function shuffleArray(array) {
+        let curId = array.length;
+        while (0 !== curId) {
+            let randId = Math.floor(Math.random() * curId);
+            curId -= 1;
+            let tmp = array[curId];
+            array[curId] = array[randId];
+            array[randId] = tmp;
+        }
+        return array;
+    }
+
+    function initSoal() {
+        let pool = (window.bankSoal && bankSoal.length) ? bankSoal : bankSoalFallback;
+        let soalAcak = shuffleArray([...pool]);
+        soalTerpilih = soalAcak.slice(0, Math.min(JML_SOAL_TAMPIL, pool.length));
+        renderSoal();
+    }
+
+    function renderSoal() {
+        const container = document.getElementById("soal-container");
+        container.innerHTML = "";
+
+        soalTerpilih.forEach((soal, index) => {
+            let optionsHtml = '';
+            for (const key in soal.pilihan) {
+                optionsHtml += `
+                    <label class="opsi-label" id="lbl-${soal.id}-${key}" onclick="pilihOpsi(this, '${soal.id}')">
+                        <input type="radio" name="soal_${soal.id}" value="${key}">
+                        <span><b>${key.toUpperCase()}.</b> ${soal.pilihan[key]}</span>
+                        <svg class="icon-feedback correct-icon" viewBox="0 0 24 24" fill="none" stroke="var(--correct)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                        <svg class="icon-feedback wrong-icon" viewBox="0 0 24 24" fill="none" stroke="var(--wrong)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+                    </label>
+                `;
+            }
+
+            const cardHtml = `
+                <div class="soal-card">
+                    <div class="pertanyaan">${index + 1}. ${soal.pertanyaan}</div>
+                    <div class="pilihan-container">
+                        ${optionsHtml}
+                    </div>
+                </div>
+            `;
+            container.innerHTML += cardHtml;
+        });
+
+        document.getElementById("btnSubmit").style.display = "block";
+    }
+
+    function pilihOpsi(element, soalId) {
+        let parent = element.parentElement;
+        let labels = parent.querySelectorAll('.opsi-label');
+        labels.forEach(lbl => lbl.classList.remove('selected'));
+        element.classList.add('selected');
+    }
+
+    function submitUjian() {
+        let benar = 0;
+        let salah = 0;
+        let kosong = 0;
+
+        soalTerpilih.forEach(soal => {
+            const radios = document.getElementsByName(`soal_${soal.id}`);
+            let jawabanUser = null;
+            for (let i = 0; i < radios.length; i++) {
+                if (radios[i].checked) {
+                    jawabanUser = radios[i].value;
+                    break;
+                }
+            }
+
+            const kunci = soal.jawaban;
+            const labelKunci = document.getElementById(`lbl-${soal.id}-${kunci}`);
+
+            if (jawabanUser === kunci) {
+                benar++;
+                labelKunci.classList.add("is-correct");
+            } else if (jawabanUser !== null) {
+                salah++;
+                const labelUser = document.getElementById(`lbl-${soal.id}-${jawabanUser}`);
+                labelUser.classList.add("is-wrong");
+                labelKunci.classList.add("is-correct");
+            } else {
+                kosong++;
+                labelKunci.classList.add("is-correct");
+            }
+
+            for (let i = 0; i < radios.length; i++) {
+                radios[i].disabled = true;
+            }
+        });
+
+        const total = soalTerpilih.length;
+        const skorAkhir = benar * (100 / JML_SOAL_TAMPIL);
+
+        document.getElementById("jmlBenar").innerText = benar;
+        document.getElementById("jmlSalah").innerText = salah + kosong;
+        document.getElementById("finalScore").innerText = Math.round(skorAkhir);
+
+        // Simpan ke rekam jejak (localStorage)
+        if (ujianAktif) {
+            tambahRiwayat(ujianAktif, skorAkhir, benar, salah, total);
+            const best = getBestScore(ujianAktif.id);
+            if (best && best.skor > Math.round(skorAkhir)) {
+                document.getElementById('rowBest').style.display = 'block';
+                document.getElementById('bestScoreLbl').innerText = best.skor;
+            } else {
+                document.getElementById('rowBest').style.display = 'none';
+            }
+        }
+
+        document.getElementById("resultModal").style.display = "flex";
+        document.getElementById("btnSubmit").style.display = "none";
+    }
+
+    function ulangiUjian() {
+        document.getElementById("resultModal").style.display = "none";
+        window.scrollTo(0, 0);
+        initSoal();
+    }
+
+    /* =================================================================
+       8) RENDER RIWAYAT
+       ================================================================= */
+    function renderRiwayat() {
+        const body = document.getElementById('riwayat-body');
+        const ringkasan = getRingkasan();
+        const riwayat = getRiwayat().slice().reverse(); // terbaru di atas
+
+        if (riwayat.length === 0) {
+            body.innerHTML = `
+                <div class="riwayat-empty">
+                    <span class="icon-big">&#128218;</span>
+                    Belum ada riwayat nilai.<br>
+                    Kerjakan ujian terlebih dahulu, skor akan otomatis tersimpan di perangkat ini.
+                </div>`;
+            document.getElementById('btnClearRiwayat').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('btnClearRiwayat').style.display = '';
+
+        const ringkasanHtml = `
+            <div class="riwayat-summary">
+                <div class="stat"><span class="num">${ringkasan.total}</span><span class="label">Total Ujian</span></div>
+                <div class="stat"><span class="num">${ringkasan.lulus}</span><span class="label">Lulus (>=70)</span></div>
+                <div class="stat"><span class="num">${ringkasan.best}</span><span class="label">Skor Terbaik</span></div>
+            </div>
+        `;
+
+        const itemsHtml = riwayat.map(r => {
+            const kelas = r.skor >= 70 ? 'lulus' : 'remidi';
+            const tgl = new Date(r.waktu);
+            const tglStr = tgl.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+            const jamStr = tgl.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            return `
+                <div class="riwayat-item">
+                    <div class="score-pill ${kelas}">${r.skor}</div>
+                    <div class="meta">
+                        <div class="paket-name">${r.paketLabel}</div>
+                        <div class="info">
+                            Benar: <span class="text-green">${r.benar}</span> &middot;
+                            Salah: <span class="text-red">${r.salah}</span> &middot;
+                            Total: ${r.total}
                         </div>
                     </div>
-                `;
-                container.innerHTML += cardHtml;
-            });
-            
-            document.getElementById("btnSubmit").style.display = "block";
+                    <div class="time">${tglStr}<br>${jamStr}</div>
+                </div>
+            `;
+        }).join('');
+
+        body.innerHTML = ringkasanHtml + itemsHtml;
+    }
+
+    function konfirmasiHapusRiwayat() {
+        if (confirm('Yakin ingin menghapus SELURUH rekam jejak nilai? Tindakan ini tidak bisa dibatalkan.')) {
+            hapusRiwayat();
         }
+    }
 
-        function pilihOpsi(element, soalId) {
-            let parent = element.parentElement;
-            let labels = parent.querySelectorAll('.opsi-label');
-            labels.forEach(lbl => lbl.classList.remove('selected'));
-            element.classList.add('selected');
+    /* =================================================================
+       9) STATUS KONEKSI (indikator online/offline)
+       ================================================================= */
+    function updateConnStatus() {
+        const el = document.getElementById('connStatus');
+        const lbl = document.getElementById('connLabel');
+        if (navigator.onLine) {
+            el.classList.remove('offline');
+            lbl.innerText = 'Online - siap digunakan';
+        } else {
+            el.classList.add('offline');
+            lbl.innerText = 'Offline - app tetap berjalan';
         }
+    }
 
-        function submitUjian() {
-            let benar = 0;
-            let salah = 0;
-            let kosong = 0;
+    /* =================================================================
+       10) INISIALISASI APLIKASI
+       ================================================================= */
+    (function init() {
+        // Status koneksi
+        updateConnStatus();
+        window.addEventListener('online', updateConnStatus);
+        window.addEventListener('offline', updateConnStatus);
 
-            soalTerpilih.forEach(soal => {
-                const radios = document.getElementsByName(`soal_${soal.id}`);
-                let jawabanUser = null;
-                for(let i=0; i<radios.length; i++){
-                    if(radios[i].checked) {
-                        jawabanUser = radios[i].value;
-                        break;
-                    }
-                }
+        // Render menu utama
+        renderMenu();
 
-                const kunci = soal.jawaban;
-                const labelKunci = document.getElementById(`lbl-${soal.id}-${kunci}`);
-
-                if(jawabanUser === kunci) {
-                    benar++;
-                    labelKunci.classList.add("is-correct"); 
-                } else if(jawabanUser !== null) {
-                    salah++;
-                    const labelUser = document.getElementById(`lbl-${soal.id}-${jawabanUser}`);
-                    labelUser.classList.add("is-wrong");
-                    labelKunci.classList.add("is-correct"); 
-                } else {
-                    kosong++;
-                    labelKunci.classList.add("is-correct");
-                }
-                
-                for(let i=0; i<radios.length; i++){
-                    radios[i].disabled = true;
-                }
-            });
-
-            let skorAkhir = benar * (100 / JML_SOAL_TAMPIL);
-
-            document.getElementById("jmlBenar").innerText = benar;
-            document.getElementById("jmlSalah").innerText = salah + kosong;
-            document.getElementById("finalScore").innerText = Math.round(skorAkhir);
-            document.getElementById("resultModal").style.display = "flex";
-            
-            document.getElementById("btnSubmit").style.display = "none";
+        // Cek URL untuk routing langsung (refresh / share link)
+        const params = new URLSearchParams(window.location.search);
+        const lvl = params.get('level');
+        const view = params.get('view');
+        if (lvl) {
+            const ujian = daftarUjian.find(u => u.id === lvl);
+            if (ujian) {
+                pilihLevel(ujian);
+                return;
+            }
         }
-
-        function ulangiUjian() {
-            document.getElementById("resultModal").style.display = "none";
-            window.scrollTo(0, 0); 
-            initSoal(); 
+        if (view === 'riwayat') {
+            bukaRiwayat();
+            return;
         }
+        showView('menu');
+    })();
+
+    /* =================================================================
+       11) REGISTER SERVICE WORKER (untuk caching offline PWA)
+       ================================================================= */
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('[CBT] Service Worker terdaftar:', reg.scope))
+                .catch(err => console.warn('[CBT] SW gagal terdaftar:', err));
+        });
+    }
     </script>
 </body>
 </html>

@@ -1,0 +1,22 @@
+{
+  "name": "CBT - SMP IT Putra Abu Hurairah",
+  "short_name": "CBT PAH",
+  "description": "Aplikasi CBT (Computer Based Test) offline untuk SMP IT Putra Abu Hurairah. Tersimpan otomatis di perangkat, bisa dibuka tanpa internet.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#031526",
+  "theme_color": "#031526",
+  "lang": "id",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education"]
+}
